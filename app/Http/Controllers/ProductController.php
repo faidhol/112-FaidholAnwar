@@ -1,65 +1,75 @@
 <?php
-
+ 
 namespace App\Http\Controllers;
-
-use App\Models\Product;
+ 
 use Illuminate\Http\Request;
-
+use App\Models\Product;
+ 
 class ProductController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
-        //
+        $products = Product::orderBy('id', 'desc')->get();
+        $total = Product::count();
+        return view('admin.product.home', compact(['products', 'total']));
     }
-
-    /**
-     * Show the form for creating a new resource.
-     */
+ 
     public function create()
     {
-        //
+        return view('admin.product.create');
     }
-
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
+ 
+    public function save(Request $request)
     {
-        //
+        $validation = $request->validate([
+            'title' => 'required',
+            'category' => 'required',
+            'price' => 'required',
+        ]);
+        $data = Product::create($validation);
+        if ($data) {
+            session()->flash('success', 'Product Add Successfully');
+            return redirect(route('admin/products'));
+        } else {
+            session()->flash('error', 'Some problem occure');
+            return redirect(route('admin.products/create'));
+        }
     }
-
-    /**
-     * Display the specified resource.
-     */
-    public function show(Product $product)
+    public function edit($id)
     {
-        //
+        $products = Product::findOrFail($id);
+        return view('admin.product.update', compact('products'));
     }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Product $product)
+ 
+    public function delete($id)
     {
-        //
+        $products = Product::findOrFail($id)->delete();
+        if ($products) {
+            session()->flash('success', 'Product Deleted Successfully');
+            return redirect(route('admin/products'));
+        } else {
+            session()->flash('error', 'Product Not Delete successfully');
+            return redirect(route('admin/products'));
+        }
     }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Product $product)
+ 
+    public function update(Request $request, $id)
     {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Product $product)
-    {
-        //
+        $products = Product::findOrFail($id);
+        $title = $request->title;
+        $category = $request->category;
+        $price = $request->price;
+ 
+        $products->title = $title;
+        $products->category = $category;
+        $products->price = $price;
+        $data = $products->save();
+        if ($data) {
+            session()->flash('success', 'Product Update Successfully');
+            return redirect(route('admin/products'));
+        } else {
+            session()->flash('error', 'Some problem occure');
+            return redirect(route('admin/products/update'));
+        }
     }
 }
